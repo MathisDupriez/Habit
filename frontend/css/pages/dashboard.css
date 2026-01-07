@@ -1,0 +1,128 @@
+/**
+ * Page Dashboard
+ */
+.dashboard-section {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-section h3 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.period-selector select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+/* Heatmap */
+.heatmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.heatmap-day {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--border);
+  cursor: pointer;
+}
+
+.heatmap-day.level-0 { background: #ebedf0; }
+.heatmap-day.level-1 { background: #9be9a8; }
+.heatmap-day.level-2 { background: #40c463; }
+.heatmap-day.level-3 { background: #30a14e; }
+.heatmap-day.level-4 { background: #216e39; }
+
+.heatmap-day:hover {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+/* Streaks */
+.streaks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.streak-card {
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.streak-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.streak-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Corrélation */
+.correlation-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.correlation-controls select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.correlation-controls span {
+  color: var(--text-muted);
+}
+
+.correlation-result {
+  padding: 1rem;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.correlation-result p {
+  margin-bottom: 0.5rem;
+}
+
+.correlation-result p:last-child {
+  margin-bottom: 0;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .heatmap-day {
+    width: 10px;
+    height: 10px;
+  }
+
+  .correlation-controls {
+    flex-direction: column;
+  }
+
+  .correlation-controls select {
+    width: 100%;
+  }
+
+  .days-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

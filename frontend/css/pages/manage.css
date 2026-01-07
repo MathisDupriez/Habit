@@ -1,0 +1,52 @@
+/**
+ * Page Gestion
+ */
+.habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.habit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.habit-item .habit-info {
+  flex: 1;
+}
+
+.habit-item .habit-name {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.habit-item .habit-frequency {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.habit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .habit-item {
+    flex-wrap: wrap;
+  }
+
+  .habit-actions {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .habit-actions .btn {
+    flex: 1;
+  }
+}

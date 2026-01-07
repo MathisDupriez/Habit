@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Habit Tracker</title>
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="css/base.css" />
+        <link rel="stylesheet" href="css/components.css" />
+        <link rel="stylesheet" href="css/layout.css" />
+        <link rel="stylesheet" href="css/pages/auth.css" />
+        <link rel="stylesheet" href="css/pages/checklist.css" />
+        <link rel="stylesheet" href="css/pages/manage.css" />
+        <link rel="stylesheet" href="css/pages/dashboard.css" />
+
+        <!-- Alpine.js -->
+        <script
+            defer
+            src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+    </head>
+    <body>
+        <div x-data>
+            <!-- Navbar (visible si authentifié) -->
+            <template x-if="$store.auth.isAuthenticated">
+                <nav class="navbar">
+                    <div class="nav-brand">Habit Tracker</div>
+                    <div class="nav-links">
+                        <a
+                            class="nav-link"
+                            :class="{ active: $store.router.currentPage === 'checklist' }"
+                            @click="$store.router.navigate('checklist')"
+                        >
+                            Checklist
+                        </a>
+                        <a
+                            class="nav-link"
+                            :class="{ active: $store.router.currentPage === 'manage' }"
+                            @click="$store.router.navigate('manage')"
+                        >
+                            Gestion
+                        </a>
+                        <a
+                            class="nav-link"
+                            :class="{ active: $store.router.currentPage === 'dashboard' }"
+                            @click="$store.router.navigate('dashboard')"
+                        >
+                            Dashboard
+                        </a>
+                        <button
+                            class="btn-logout"
+                            @click="$store.auth.logout()"
+                        >
+                            Déconnexion
+                        </button>
+                    </div>
+                </nav>
+            </template>
+
+            <!-- Page Auth -->
+            <template x-if="!$store.auth.isAuthenticated">
+                <div x-data="AuthPage()" class="page">
+                    <div class="auth-container">
+                        <h1>Habit Tracker</h1>
+                        <p class="auth-subtitle">
+                            Suivez vos habitudes quotidiennes
+                        </p>
+
+                        <div class="auth-tabs">
+                            <button
+                                class="auth-tab"
+                                :class="{ active: activeTab === 'login' }"
+                                @click="switchTab('login')"
+                            >
+                                Connexion
+                            </button>
+                            <button
+                                class="auth-tab"
+                                :class="{ active: activeTab === 'register' }"
+                                @click="switchTab('register')"
+                            >
+                                Inscription
+                            </button>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form
+                            class="auth-form"
+                            x-show="activeTab === 'login'"
+                            @submit.prevent="handleLogin"
+                        >
+                            <div class="form-group">
+                                <label for="loginEmail">Email</label>
+                                <input
+                                    type="email"
+                                    id="loginEmail"
+                                    x-model="loginEmail"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Mot de passe</label>
+                                <input
+                                    type="password"
+                                    id="loginPassword"
+                                    x-model="loginPassword"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                :disabled="loading"
+                            >
+                                <span x-show="!loading">Se connecter</span>
+                                <span x-show="loading">Chargement...</span>
+                            </button>
+                        </form>
+
+                        <!-- Register Form -->
+                        <form
+                            class="auth-form"
+                            x-show="activeTab === 'register'"
+                            @submit.prevent="handleRegister"
+                        >
+                            <div class="form-group">
+                                <label for="registerName">Nom</label>
+                                <input
+                                    type="text"
+                                    id="registerName"
+                                    x-model="registerName"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="registerEmail">Email</label>
+                                <input
+                                    type="email"
+                                    id="registerEmail"
+                                    x-model="registerEmail"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPassword"
+                                    >Mot de passe</label
+                                >
+                                <input
+                                    type="password"
+                                    id="registerPassword"
+                                    x-model="registerPassword"
+                                    minlength="6"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                :disabled="loading"
+                            >
+                                <span x-show="!loading">S'inscrire</span>
+                                <span x-show="loading">Chargement...</span>
+                            </button>
+                        </form>
+
+                        <div
+                            class="error-message"
+                            x-show="error"
+                            x-text="error"
+                        ></div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Page Checklist -->
+            <template
+                x-if="$store.auth.isAuthenticated && $store.router.currentPage === 'checklist'"
+            >
+                <div x-data="ChecklistPage()" x-init="init()" class="page">
+                    <div class="container">
+                        <header class="page-header">
+                            <h2>Checklist du jour</h2>
+                            <div class="date-nav">
+                                <button class="btn-icon" @click="prevDay">
+                                    &lt;
+                                </button>
+                                <span x-text="displayDate"></span>
+                                <button class="btn-icon" @click="nextDay">
+                                    &gt;
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="checklist">
+                            <template x-if="loading">
+                                <p class="empty-message">Chargement...</p>
+                            </template>
+                            <template
+                                x-if="!loading && scheduledHabits.length === 0"
+                            >
+                                <p class="empty-message">
+                                    Aucune habitude prévue pour ce jour.
+                                </p>
+                            </template>
+                            <template
+                                x-for="habit in scheduledHabits"
+                                :key="habit.id"
+                            >
+                                <div
+                                    class="checklist-item"
+                                    :class="{ completed: isCompleted(habit.id) }"
+                                    @click="toggle(habit.id)"
+                                >
+                                    <div class="checkbox">
+                                        <span x-show="isCompleted(habit.id)"
+                                            >✓</span
+                                        >
+                                    </div>
+                                    <span
+                                        class="habit-name"
+                                        x-text="habit.name"
+                                    ></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Page Gestion -->
+            <template
+                x-if="$store.auth.isAuthenticated && $store.router.currentPage === 'manage'"
+            >
+                <div x-data="ManagePage()" x-init="init()" class="page">
+                    <div class="container">
+                        <header class="page-header">
+                            <h2>Gestion des habitudes</h2>
+                            <button
+                                class="btn btn-primary"
+                                @click="openModal()"
+                            >
+                                + Ajouter
+                            </button>
+                        </header>
+
+                        <div class="habits-list">
+                            <template x-if="loading">
+                                <p class="empty-message">Chargement...</p>
+                            </template>
+                            <template x-if="!loading && habits.length === 0">
+                                <p class="empty-message">
+                                    Aucune habitude. Cliquez sur "Ajouter" pour
+                                    en créer une.
+                                </p>
+                            </template>
+                            <template x-for="habit in habits" :key="habit.id">
+                                <div class="habit-item">
+                                    <div class="habit-info">
+                                        <div
+                                            class="habit-name"
+                                            x-text="habit.name"
+                                        ></div>
+                                        <div
+                                            class="habit-frequency"
+                                            x-text="formatFrequency(habit)"
+                                        ></div>
+                                    </div>
+                                    <div class="habit-actions">
+                                        <button
+                                            class="btn btn-secondary btn-sm"
+                                            @click="openModal(habit)"
+                                        >
+                                            Modifier
+                                        </button>
+                                        <button
+                                            class="btn btn-danger btn-sm"
+                                            @click="deleteHabit(habit.id)"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Modal -->
+                    <template x-if="modalOpen">
+                        <div class="modal-backdrop" @click.self="closeModal()">
+                            <div class="modal">
+                                <h3
+                                    x-text="editingId ? 'Modifier l\'habitude' : 'Nouvelle habitude'"
+                                ></h3>
+                                <form @submit.prevent="handleSubmit">
+                                    <div class="form-group">
+                                        <label>Nom</label>
+                                        <input
+                                            type="text"
+                                            x-model="form.name"
+                                            required
+                                        />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Fréquence</label>
+                                        <select x-model="form.frequencyType">
+                                            <option value="daily">
+                                                Tous les jours
+                                            </option>
+                                            <option value="weekly">
+                                                Jours spécifiques
+                                            </option>
+                                            <option value="monthly">
+                                                Mensuel
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div
+                                        class="form-group"
+                                        x-show="form.frequencyType === 'weekly'"
+                                    >
+                                        <label>Jours de la semaine</label>
+                                        <div class="days-grid">
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('monday')"
+                                                    @change="toggleWeekday('monday')"
+                                                />
+                                                Lun</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('tuesday')"
+                                                    @change="toggleWeekday('tuesday')"
+                                                />
+                                                Mar</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('wednesday')"
+                                                    @change="toggleWeekday('wednesday')"
+                                                />
+                                                Mer</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('thursday')"
+                                                    @change="toggleWeekday('thursday')"
+                                                />
+                                                Jeu</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('friday')"
+                                                    @change="toggleWeekday('friday')"
+                                                />
+                                                Ven</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('saturday')"
+                                                    @change="toggleWeekday('saturday')"
+                                                />
+                                                Sam</label
+                                            >
+                                            <label
+                                                ><input
+                                                    type="checkbox"
+                                                    :checked="isWeekdaySelected('sunday')"
+                                                    @change="toggleWeekday('sunday')"
+                                                />
+                                                Dim</label
+                                            >
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="form-group"
+                                        x-show="form.frequencyType === 'monthly'"
+                                    >
+                                        <label>Jours du mois (ex: 1, 15)</label>
+                                        <input
+                                            type="text"
+                                            x-model="form.monthlyDays"
+                                            placeholder="1, 15"
+                                        />
+                                    </div>
+                                    <div class="modal-actions">
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            @click="closeModal()"
+                                        >
+                                            Annuler
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary"
+                                        >
+                                            Sauvegarder
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Page Dashboard -->
+            <template
+                x-if="$store.auth.isAuthenticated && $store.router.currentPage === 'dashboard'"
+            >
+                <div x-data="DashboardPage()" x-init="init()" class="page">
+                    <div class="container">
+                        <header class="page-header">
+                            <h2>Dashboard</h2>
+                            <div class="period-selector">
+                                <select
+                                    x-model="period"
+                                    @change="changePeriod()"
+                                >
+                                    <option value="30">
+                                        30 derniers jours
+                                    </option>
+                                    <option value="90">
+                                        90 derniers jours
+                                    </option>
+                                    <option value="365">Cette année</option>
+                                </select>
+                            </div>
+                        </header>
+
+                        <section class="dashboard-section">
+                            <h3>Heatmap de complétion</h3>
+                            <div class="heatmap">
+                                <template
+                                    x-for="day in heatmapDays"
+                                    :key="day.date"
+                                >
+                                    <div
+                                        class="heatmap-day"
+                                        :class="'level-' + day.level"
+                                        :title="day.tooltip"
+                                    ></div>
+                                </template>
+                            </div>
+                        </section>
+
+                        <section class="dashboard-section">
+                            <h3>Streaks actuels</h3>
+                            <div class="streaks-grid">
+                                <template
+                                    x-for="item in streaks"
+                                    :key="item.habit.id"
+                                >
+                                    <div class="streak-card">
+                                        <div
+                                            class="streak-count"
+                                            x-text="item.streak"
+                                        ></div>
+                                        <div
+                                            class="streak-label"
+                                            x-text="item.habit.name"
+                                        ></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </section>
+
+                        <section class="dashboard-section">
+                            <h3>Corrélations</h3>
+                            <div class="correlation-controls">
+                                <select x-model="correlationHabit1">
+                                    <option value="">Sélectionner...</option>
+                                    <template x-for="h in habits" :key="h.id">
+                                        <option
+                                            :value="h.id"
+                                            x-text="h.name"
+                                        ></option>
+                                    </template>
+                                </select>
+                                <span>vs</span>
+                                <select x-model="correlationHabit2">
+                                    <option value="">Sélectionner...</option>
+                                    <template x-for="h in habits" :key="h.id">
+                                        <option
+                                            :value="h.id"
+                                            x-text="h.name"
+                                        ></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="correlation-result">
+                                <template x-if="!correlationResult">
+                                    <p>
+                                        Sélectionnez deux habitudes différentes
+                                    </p>
+                                </template>
+                                <template x-if="correlationResult">
+                                    <div>
+                                        <p>
+                                            <strong>Les deux faits:</strong>
+                                            <span
+                                                x-text="correlationResult.bothDone"
+                                            ></span>
+                                            jours (<span
+                                                x-text="correlationResult.bothPercent"
+                                            ></span
+                                            >%)
+                                        </p>
+                                        <p>
+                                            <strong
+                                                x-text="correlationResult.habit1 + ' uniquement:'"
+                                            ></strong>
+                                            <span
+                                                x-text="correlationResult.h1Only"
+                                            ></span>
+                                            jours
+                                        </p>
+                                        <p>
+                                            <strong
+                                                x-text="correlationResult.habit2 + ' uniquement:'"
+                                            ></strong>
+                                            <span
+                                                x-text="correlationResult.h2Only"
+                                            ></span>
+                                            jours
+                                        </p>
+                                        <p>
+                                            <strong>Aucun des deux:</strong>
+                                            <span
+                                                x-text="correlationResult.neither"
+                                            ></span>
+                                            jours
+                                        </p>
+                                    </div>
+                                </template>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- JS - Config et Utils -->
+        <script src="js/config.js"></script>
+        <script src="js/utils/date.js"></script>
+        <script src="js/utils/dom.js"></script>
+        <script src="js/utils/habit.js"></script>
+
+        <!-- JS - Services -->
+        <script src="js/services/http.js"></script>
+        <script src="js/services/authService.js"></script>
+        <script src="js/services/habitService.js"></script>
+        <script src="js/services/logService.js"></script>
+
+        <!-- JS - Stores -->
+        <script src="js/stores/routerStore.js"></script>
+        <script src="js/stores/authStore.js"></script>
+        <script src="js/stores/habitsStore.js"></script>
+        <script src="js/stores/logsStore.js"></script>
+
+        <!-- JS - Pages -->
+        <script src="js/pages/authPage.js"></script>
+        <script src="js/pages/checklistPage.js"></script>
+        <script src="js/pages/managePage.js"></script>
+        <script src="js/pages/dashboardPage.js"></script>
+
+        <!-- JS - App -->
+        <script src="js/app.js"></script>
+    </body>
+</html>

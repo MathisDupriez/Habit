@@ -29,3 +29,18 @@ npm-debug.log*
 # Cache
 .cache/
 *.cache
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Misc
+*.bak
+*.tmp

@@ -1,0 +1,90 @@
+/**
+ * Page Checklist
+ */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.date-nav span {
+  font-weight: 500;
+  min-width: 180px;
+  text-align: center;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+  user-select: none;
+}
+
+.checklist-item:hover {
+  background: #fafafa;
+}
+
+.checklist-item:active {
+  transform: scale(0.98);
+}
+
+.checklist-item.completed {
+  background: #f0fdf4;
+}
+
+.checklist-item.completed .habit-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.checkbox {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.checklist-item.completed .checkbox {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.habit-name {
+  flex: 1;
+  font-size: 1rem;
+}
+
+/* Mobile - plus gros touch targets */
+@media (max-width: 600px) {
+  .checklist-item {
+    padding: 1.25rem 1rem;
+  }
+
+  .habit-name {
+    font-size: 1.1rem;
+  }
+
+  .checkbox {
+    width: 32px;
+    height: 32px;
+  }
+}
